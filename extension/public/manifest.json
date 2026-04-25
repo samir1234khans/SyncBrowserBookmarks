@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Sync Browser Bookmarks",
+  "version": "0.1.0",
+  "description": "Sync bookmarks between Chrome and Edge via a shared backend.",
+  "permissions": ["bookmarks", "storage", "alarms"],
+  "host_permissions": ["http://localhost:4000/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
