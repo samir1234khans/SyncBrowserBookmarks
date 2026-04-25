@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bookmark Sync</title>
+    <style>
+      body { font-family: Inter, system-ui, sans-serif; margin: 0; padding: 12px; width: 320px; }
+      .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
+      .row { display: flex; justify-content: space-between; margin: 6px 0; }
+      button { width: 100%; margin-top: 8px; padding: 8px; border: none; border-radius: 6px; cursor: pointer; }
+      #syncNow { background: #0b57d0; color: #fff; }
+      #login { background: #f1f3f4; }
+      #status { margin-top: 8px; font-size: 12px; color: #444; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h3>Bookmark Sync</h3>
+      <div class="row"><span>Status</span><span id="syncStatus">Idle</span></div>
+      <div class="row"><span>Last Sync</span><span id="lastSync">Never</span></div>
+      <div class="row"><span>Bookmarks</span><span id="bookmarkCount">0</span></div>
+      <button id="syncNow">Sync Now</button>
+      <button id="login">Login / Register</button>
+      <div id="status"></div>
+    </div>
+    <script type="module" src="/src/popup/index.ts"></script>
+  </body>
+</html>

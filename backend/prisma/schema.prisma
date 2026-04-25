@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BrowserType {
+  CHROME
+  EDGE
+}
+
+enum NodeType {
+  BOOKMARK
+  FOLDER
+}
+
+enum ChangeType {
+  CREATE
+  UPDATE
+  MOVE
+  DELETE
+}
+
+model User {
+  id              String             @id @default(cuid())
+  email           String             @unique
+  passwordHash    String
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  devices         Device[]
+  bookmarks       BookmarkNode[]
+  changeEvents    ChangeEvent[]
+  syncSessions    SyncSession[]
+  conflicts       SyncConflict[]
+}
+
+model Device {
+  id              String             @id @default(cuid())
+  userId          String
+  browser         BrowserType
+  deviceName      String
+  installedAt     DateTime           @default(now())
+  lastSeenAt      DateTime?
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mappings        BookmarkMapping[]
+  sessions        SyncSession[]
+
+  @@index([userId, browser])
+}
+
+model BookmarkNode {
+  id              String             @id @default(cuid())
+  userId          String
+  parentId        String?
+  type            NodeType
+  title           String
+  url             String?
+  position        Int                @default(0)
+  pathHash        String
+  clientUpdatedAt DateTime
+  serverUpdatedAt DateTime           @updatedAt
+  deletedAt       DateTime?
+  createdAt       DateTime           @default(now())
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent          BookmarkNode?      @relation("NodeHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children        BookmarkNode[]     @relation("NodeHierarchy")
+  mappings        BookmarkMapping[]
+  events          ChangeEvent[]
+
+  @@index([userId, deletedAt])
+  @@index([userId, pathHash])
+}
+
+model BookmarkMapping {
+  id              String             @id @default(cuid())
+  bookmarkNodeId  String
+  deviceId        String
+  browserNodeId   String
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  bookmark        BookmarkNode       @relation(fields: [bookmarkNodeId], references: [id], onDelete: Cascade)
+  device          Device             @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, browserNodeId])
+  @@unique([bookmarkNodeId, deviceId])
+}
+
+model ChangeEvent {
+  id              String             @id @default(cuid())
+  userId          String
+  bookmarkNodeId  String
+  sourceDeviceId  String
+  changeType      ChangeType
+  payload         Json
+  createdAt       DateTime           @default(now())
+  processedAt     DateTime?
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookmark        BookmarkNode       @relation(fields: [bookmarkNodeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([sourceDeviceId, processedAt])
+}
+
+model SyncSession {
+  id              String             @id @default(cuid())
+  userId          String
+  deviceId        String
+  startedAt       DateTime           @default(now())
+  completedAt     DateTime?
+  lastCursor      DateTime?
+  status          String
+  summary         Json
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device          Device             @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt])
+}
+
+model SyncConflict {
+  id              String             @id @default(cuid())
+  userId          String
+  bookmarkNodeId  String
+  detectedAt      DateTime           @default(now())
+  reason          String
+  localPayload    Json
+  remotePayload   Json
+  resolvedAt      DateTime?
+  resolution      String?
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, detectedAt])
+}
